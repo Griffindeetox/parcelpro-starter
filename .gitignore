@@ -1,0 +1,23 @@
+# Laravel
+/vendor
+/node_modules
+/.env
+/.env.*
+/storage/*.key
+/public/storage
+Homestead.yaml
+Homestead.json
+
+# Composer & Node
+composer.lock
+package-lock.json
+
+# Docker
+docker/*.pid
+.docker
+*.log
+
+# Mac / Editor
+.DS_Store
+.idea
+.vscode
