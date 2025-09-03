@@ -1,0 +1,24 @@
+{
+  "family": "parcelpro-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::976193255820:role/parcelpro-exec",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "976193255820.dkr.ecr.us-east-1.amazonaws.com/parcelproatest",
+      "essential": true,
+      "portMappings": [{ "containerPort": 80, "protocol": "tcp" }],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/parcelpro",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}
