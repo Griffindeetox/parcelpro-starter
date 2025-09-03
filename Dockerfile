@@ -1,20 +1,31 @@
-# ---- Runtime image for local dev (no app code copied at build) ----
+# Dockerfile (ECS-ready: Nginx + PHP-FPM + Supervisor)
 FROM php:8.2-fpm-alpine
 
+# Install system deps: nginx, supervisor, build tools, and PHP extensions
+RUN apk add --no-cache nginx supervisor curl git bash icu-dev libzip-dev oniguruma-dev \
+    && docker-php-ext-install intl pdo pdo_mysql mbstring zip opcache
+
+# Create web root
 WORKDIR /var/www/html
 
-# system deps + php extensions for Laravel
-RUN apk add --no-cache bash icu-dev libzip-dev oniguruma-dev git zip unzip curl \
-    && docker-php-ext-install pdo_mysql opcache intl
+# Copy app (Docker ignores .git by default if .dockerignore present; fine if not)
+COPY src/ /var/www/html/
 
-# install Composer globally
-RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
-    && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && rm /tmp/composer-setup.php
+# Nginx config
+COPY nginx/default.conf /etc/nginx/http.d/default.conf
 
-# create non-root user that matches container usage
-RUN adduser -D -H app && chown -R app:app /var/www/html
-USER app
+# Supervisor config
+COPY .docker/supervisord.conf /etc/supervisord.conf
 
-# php-fpm in foreground
-CMD ["php-fpm", "-F"]
+# Permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && mkdir -p /run/nginx
+
+# Expose HTTP
+EXPOSE 80
+
+# Healthcheck (optional, hit the Laravel route)
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost/api/health/ready || exit 1
+
+# Start both processes
+CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
